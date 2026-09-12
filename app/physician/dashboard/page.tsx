@@ -1,41 +1,120 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { requireRole } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import {
+  PageHeader,
+  Panel,
+  EmptyState,
+  StatusBadge,
+  LinkButton,
+  formatTime,
+  formatDate,
+} from "@/components/ui-kit";
 
-export default function PhysicianDashboard() {
+export const metadata = { title: "Today · CareClinic" };
+
+export default async function PhysicianDashboard() {
+  const { profile } = await requireRole("PHYSICIAN");
+
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(startOfDay);
+  endOfDay.setDate(endOfDay.getDate() + 1);
+
+  // WBS 4.6.1 / 6.2.1 - the day's patient list for this physician.
+  const today = await prisma.appointment.findMany({
+    where: {
+      physicianId: profile.id,
+      date: { gte: startOfDay, lt: endOfDay },
+      status: { in: ["SCHEDULED", "ACCEPTED", "CHECKED_IN"] },
+    },
+    include: { patient: true, consultation: true },
+    orderBy: { date: "asc" },
+  });
+
+  // WBS 4.6.2 / 6.2.2 - visits still waiting on a written note.
+  const pendingNotes = await prisma.appointment.findMany({
+    where: {
+      physicianId: profile.id,
+      status: { in: ["CHECKED_IN", "ACCEPTED", "COMPLETED"] },
+      consultation: null,
+      date: { lt: endOfDay },
+    },
+    include: { patient: true },
+    orderBy: { date: "desc" },
+    take: 20,
+  });
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold font-inter text-[#0b3d20]">Welcome back, Dr. Jenkins!</h1>
-          <p className="text-[#64748b] mt-1">You have 8 consultations scheduled for today.</p>
-        </div>
-      </div>
+    <>
+      <PageHeader
+        eyebrow="Physician workspace"
+        title={`Good day, Dr ${profile.lastName}`}
+        description="Your clinic list for today and any notes still outstanding."
+      />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
-        <Card className="col-span-1 lg:col-span-2 border-[#e2e8f0] shadow-sm">
-          <CardHeader className="bg-[#f8f9ff] border-b border-[#e2e8f0] py-4">
-            <CardTitle className="text-[#0b3d20] text-lg">Today's Queue</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <div className="divide-y divide-[#e2e8f0]">
-              <div className="py-4 flex justify-between items-center bg-[#d9f2e6]/30 px-4 -mx-4">
-                <div>
-                  <p className="font-bold text-[#0b1c30]">Alex Rodriguez (Age 34)</p>
-                  <p className="text-sm text-[#64748b]">10:00 AM • Routine Checkup</p>
-                </div>
-                <Button className="bg-[#0b3d20] hover:bg-[#2f7c57] text-white">Start Consultation</Button>
-              </div>
-              <div className="py-4 flex justify-between items-center px-4 -mx-4">
-                <div>
-                  <p className="font-medium text-[#0b1c30]">Maria Garcia (Age 28)</p>
-                  <p className="text-sm text-[#64748b]">10:30 AM • Blood Test Follow-up</p>
-                </div>
-                <Button variant="outline" className="text-[#2f7c57] border-[#2f7c57]">View Profile</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="space-y-6">
+        <Panel
+          title="Today's patients"
+          description={formatDate(startOfDay)}
+          bodyClassName=""
+        >
+          {today.length === 0 ? (
+            <EmptyState title="No patients scheduled today" />
+          ) : (
+            <ul className="divide-y divide-border">
+              {today.map((a) => (
+                <li key={a.id} className="px-5 py-4 flex flex-wrap gap-3 items-center justify-between">
+                  <div className="flex items-center gap-4 min-w-0">
+                    <span className="text-[14px] font-medium tnum w-14 shrink-0">
+                      {formatTime(a.date)}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[14px] font-medium">
+                        {a.patient.firstName} {a.patient.lastName}
+                      </p>
+                      <p className="mt-0.5 text-[13px] text-muted-foreground line-clamp-1">
+                        {a.reason}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    <StatusBadge status={a.status} />
+                    <LinkButton href={`/physician/consultation/${a.id}`} variant="primary">
+                      {a.consultation ? "Open note" : "Write note"}
+                    </LinkButton>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
+
+        <Panel
+          title="Pending notes"
+          description="Visits without a consultation note."
+          bodyClassName=""
+        >
+          {pendingNotes.length === 0 ? (
+            <EmptyState title="Nothing outstanding" hint="Every visit has a note on file." />
+          ) : (
+            <ul className="divide-y divide-border">
+              {pendingNotes.map((a) => (
+                <li key={a.id} className="px-5 py-3.5 flex flex-wrap gap-3 items-center justify-between">
+                  <div className="min-w-0">
+                    <p className="text-[14px] font-medium">
+                      {a.patient.firstName} {a.patient.lastName}
+                    </p>
+                    <p className="mt-0.5 text-[13px] text-muted-foreground tnum">
+                      {formatDate(a.date)} · {a.reason}
+                    </p>
+                  </div>
+                  <LinkButton href={`/physician/consultation/${a.id}`}>Write note</LinkButton>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
       </div>
-    </div>
+    </>
   );
 }

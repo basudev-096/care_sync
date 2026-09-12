@@ -1,33 +1,19 @@
-import { UserButton } from "@clerk/nextjs";
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
+import { requireRole } from "@/lib/auth";
+import { PortalShell } from "@/components/portal-shell";
+
+const NAV = [
+  { href: "/patient/dashboard", label: "Dashboard" },
+  { href: "/patient/appointments", label: "Appointments" },
+  { href: "/patient/records", label: "Consultations" },
+  { href: "/patient/prescriptions", label: "Prescriptions" },
+  { href: "/patient/profile", label: "My details" },
+];
 
 export default async function PatientLayout({ children }: { children: React.ReactNode }) {
-  const { userId } = await auth();
-  if (!userId) {
-    return redirect("/");
-  }
+  const { profile } = await requireRole("PATIENT");
   return (
-    <div className="min-h-screen bg-[#f8f9ff]">
-      {/* Top Navbar */}
-      <header className="h-16 bg-[#0b3d20] flex items-center justify-between px-6 border-b border-[#0b3d20]/10">
-        <div className="flex items-center space-x-4">
-          <span className="text-white font-bold text-xl font-inter">CareSync</span>
-          <nav className="hidden md:flex space-x-6 ml-8">
-            <a href="/patient/dashboard" className="text-white/80 hover:text-white font-inter text-sm">Dashboard</a>
-            <a href="/patient/appointments" className="text-white/80 hover:text-white font-inter text-sm">Appointments</a>
-            <a href="/patient/records" className="text-white/80 hover:text-white font-inter text-sm">Records</a>
-            <a href="/patient/profile" className="text-white/80 hover:text-white font-inter text-sm">Profile</a>
-          </nav>
-        </div>
-        <div>
-          <UserButton afterSignOutUrl="/sign-in" />
-        </div>
-      </header>
-      
-      <main className="p-6 md:p-8 max-w-[1600px] mx-auto">
-        {children}
-      </main>
-    </div>
+    <PortalShell roleLabel="Patient" userName={`${profile.firstName} ${profile.lastName}`} nav={NAV}>
+      {children}
+    </PortalShell>
   );
 }

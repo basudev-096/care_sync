@@ -19,11 +19,13 @@ enum Role {
 }
 
 enum AppointmentStatus {
-  PENDING
-  ACCEPTED
-  CHECKED_IN
-  COMPLETED
-  CANCELLED
+  PENDING     // 3.1.1 requested by patient, no slot yet
+  SCHEDULED   // 3.2.2 staff assigned a date/time, awaiting patient acceptance
+  ACCEPTED    // 3.1.3 patient accepted the assigned slot
+  CHECKED_IN  // 3.4.2 patient has arrived
+  COMPLETED   // 3.5.2 consultation finished
+  CANCELLED   // 3.2.5 / 3.3.1 / 3.5.1
+  NO_SHOW     // 3.4.3 patient did not arrive
 }
 
 model PatientProfile {
@@ -73,7 +75,7 @@ model StaffProfile {
 
 model Appointment {
   id           String            @id @default(cuid())
-  date         DateTime
+  date         DateTime?
   status       AppointmentStatus @default(PENDING)
   reason       String?
   cancelReason String?

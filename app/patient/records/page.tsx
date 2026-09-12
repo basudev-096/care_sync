@@ -1,73 +1,72 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { requireRole } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { PageHeader, Panel, EmptyState, formatDateTime } from "@/components/ui-kit";
 
-export default function PatientRecords() {
+export const metadata = { title: "Consultations · CareClinic" };
+
+export default async function PatientRecords() {
+  const { profile } = await requireRole("PATIENT");
+
+  // WBS 4.4.1 - past consultation summaries and clinical notes, own records only.
+  const consultations = await prisma.consultation.findMany({
+    where: { patientId: profile.id },
+    include: { physician: true, appointment: true, prescriptions: true },
+    orderBy: { createdAt: "desc" },
+  });
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-inter text-[#0b3d20]">Medical Records</h1>
-      </div>
+    <>
+      <PageHeader
+        eyebrow="Clinical records"
+        title="Your consultations"
+        description="Notes written by your physician at each visit."
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="border-[#e2e8f0] shadow-sm">
-          <CardHeader className="bg-[#f8f9ff] border-b border-[#e2e8f0]">
-            <CardTitle className="text-[#0b3d20] text-lg">Consultations</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-[#e2e8f0]">
-              <div className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-[#0b1c30]">General Checkup</p>
-                  <p className="text-sm text-[#64748b]">Dr. Emily Lee • Aug 15, 2026</p>
-                </div>
-                <Button variant="ghost" size="sm" className="text-[#2f7c57]">View Notes</Button>
-              </div>
-              <div className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-[#0b1c30]">Cardiology Consultation</p>
-                  <p className="text-sm text-[#64748b]">Dr. Sarah Jenkins • May 10, 2026</p>
-                </div>
-                <Button variant="ghost" size="sm" className="text-[#2f7c57]">View Notes</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {consultations.length === 0 ? (
+        <Panel>
+          <EmptyState
+            title="No consultations yet"
+            hint="Notes appear here after you have been seen by a physician."
+          />
+        </Panel>
+      ) : (
+        <div className="space-y-5">
+          {consultations.map((c) => (
+            <Panel
+              key={c.id}
+              title={formatDateTime(c.appointment.date ?? c.createdAt)}
+              description={`Dr ${c.physician.firstName} ${c.physician.lastName}${
+                c.physician.specialty ? " · " + c.physician.specialty : ""
+              }`}
+            >
+              <dl className="grid gap-4 sm:grid-cols-3">
+                <Note label="Symptoms" value={c.symptoms} />
+                <Note label="Diagnosis" value={c.diagnosis} />
+                <Note label="Advice" value={c.advice} />
+              </dl>
 
-        <Card className="border-[#e2e8f0] shadow-sm">
-          <CardHeader className="bg-[#f8f9ff] border-b border-[#e2e8f0]">
-            <CardTitle className="text-[#0b3d20] text-lg">Lab Results</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-[#e2e8f0]">
-              <div className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-[#0b1c30]">Comprehensive Blood Panel</p>
-                  <p className="text-sm text-[#64748b]">Ordered by Dr. Sarah Jenkins • Sept 1, 2026</p>
-                </div>
-                <Button variant="outline" size="sm" className="text-[#0b3d20] border-[#0b3d20]">Download PDF</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card className="col-span-1 md:col-span-2 border-[#e2e8f0] shadow-sm">
-          <CardHeader className="bg-[#f8f9ff] border-b border-[#e2e8f0]">
-            <CardTitle className="text-[#0b3d20] text-lg">Active Prescriptions</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-[#e2e8f0]">
-              <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <h3 className="font-bold text-[#0b1c30] text-lg">Amoxicillin (500mg)</h3>
-                  <p className="text-[#64748b]">Take 1 tablet every 8 hours for 7 days</p>
-                  <p className="text-xs text-[#64748b] mt-1">Prescribed: Aug 15, 2026</p>
-                </div>
-                <Button className="bg-[#0b3d20] hover:bg-[#2f7c57] text-white">Request Refill</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              {c.prescriptions.length > 0 ? (
+                <p className="mt-4 pt-4 border-t border-border text-[13px] text-muted-foreground">
+                  {c.prescriptions.length} prescription
+                  {c.prescriptions.length === 1 ? "" : "s"} on file — see the Prescriptions tab to
+                  download.
+                </p>
+              ) : null}
+            </Panel>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+function Note({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div>
+      <dt className="eyebrow mb-1.5">{label}</dt>
+      <dd className="text-[14px] leading-relaxed whitespace-pre-wrap">
+        {value || <span className="text-muted-foreground">Not recorded</span>}
+      </dd>
     </div>
   );
 }

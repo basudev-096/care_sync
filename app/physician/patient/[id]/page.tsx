@@ -1,78 +1,143 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { notFound } from "next/navigation";
+import { requireRole } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { parseMedicines, describeMedicine } from "@/lib/prescription";
+import {
+  PageHeader,
+  Panel,
+  EmptyState,
+  StatusBadge,
+  LinkButton,
+  formatDate,
+  formatDateTime,
+  age,
+} from "@/components/ui-kit";
 
-export default function PhysicianPatientProfile() {
+export const metadata = { title: "Patient · CareClinic" };
+
+/** WBS 4.1.2 / 4.3 - clinical profile plus full consultation history. */
+export default async function PhysicianPatientProfile({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  await requireRole("PHYSICIAN");
+  const { id } = await params;
+
+  const patient = await prisma.patientProfile.findUnique({
+    where: { id },
+    include: {
+      appointments: { orderBy: { createdAt: "desc" }, include: { physician: true } },
+      consultations: {
+        orderBy: { createdAt: "desc" },
+        include: { physician: true, appointment: true, prescriptions: true },
+      },
+    },
+  });
+
+  if (!patient) notFound();
+
+  const years = age(patient.dob);
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold font-inter text-[#0b3d20]">Alex Rodriguez</h1>
-          <p className="text-[#64748b] mt-1">PT-10045 • Male • 34 Years Old</p>
-        </div>
-        <Button className="bg-[#0b3d20] hover:bg-[#2f7c57] text-white">
-          Start Consultation
-        </Button>
-      </div>
+    <>
+      <PageHeader
+        eyebrow="Clinical profile"
+        title={`${patient.firstName} ${patient.lastName}`}
+        description={[
+          years !== null ? `${years} years` : null,
+          patient.sex,
+          patient.phone,
+          patient.email,
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+        actions={<LinkButton href="/physician/patients">Back to search</LinkButton>}
+      />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-8">
-        <div className="col-span-1 space-y-6">
-          <Card className="border-[#e2e8f0] shadow-sm">
-            <CardHeader className="bg-[#f8f9ff] border-b border-[#e2e8f0] py-4">
-              <CardTitle className="text-[#0b3d20] text-sm">Vitals & Measurements</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-4">
-              <div className="space-y-4 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-[#64748b]">Height</span>
-                  <span className="font-medium text-[#0b1c30]">5' 11"</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#64748b]">Weight</span>
-                  <span className="font-medium text-[#0b1c30]">175 lbs</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#64748b]">Blood Pressure</span>
-                  <span className="font-medium text-[#0b1c30]">120/80 mmHg</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="border-[#e2e8f0] shadow-sm">
-            <CardHeader className="bg-[#f8f9ff] border-b border-[#e2e8f0] py-4">
-              <CardTitle className="text-[#0b3d20] text-sm">Active Medications</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-4">
-              <ul className="list-disc pl-4 space-y-2 text-sm text-[#0b1c30]">
-                <li>Lisinopril 10mg - Daily</li>
-                <li>Atorvastatin 20mg - Nightly</li>
+      <div className="grid gap-6 lg:grid-cols-[1fr_20rem] items-start">
+        <div className="space-y-6">
+          {/* WBS 4.3.1 / 4.3.2 / 4.3.3 */}
+          <Panel title="Consultation history" bodyClassName="">
+            {patient.consultations.length === 0 ? (
+              <EmptyState title="No consultations recorded" />
+            ) : (
+              <ul className="divide-y divide-border">
+                {patient.consultations.map((c) => (
+                  <li key={c.id} className="px-5 py-4">
+                    <div className="flex flex-wrap gap-2 items-baseline justify-between">
+                      <p className="text-[14px] font-medium tnum">
+                        {formatDate(c.appointment.date ?? c.createdAt)}
+                      </p>
+                      <p className="text-[13px] text-muted-foreground">
+                        Dr {c.physician.firstName} {c.physician.lastName}
+                      </p>
+                    </div>
+
+                    <dl className="mt-3 grid gap-3 sm:grid-cols-3">
+                      <Note label="Symptoms" value={c.symptoms} />
+                      <Note label="Diagnosis" value={c.diagnosis} />
+                      <Note label="Advice" value={c.advice} />
+                    </dl>
+
+                    {c.prescriptions.length > 0 ? (
+                      <div className="mt-3.5 pt-3.5 border-t border-border">
+                        <p className="eyebrow mb-1.5">Prescribed</p>
+                        <ul className="space-y-1">
+                          {c.prescriptions.flatMap((p) =>
+                            parseMedicines(p.medicineDetails).map((m, i) => (
+                              <li key={`${p.id}-${i}`} className="text-[13px]">
+                                <span className="font-medium">{m.name}</span>
+                                {describeMedicine(m) ? (
+                                  <span className="text-muted-foreground">
+                                    {" "}
+                                    — {describeMedicine(m)}
+                                  </span>
+                                ) : null}
+                              </li>
+                            )),
+                          )}
+                        </ul>
+                      </div>
+                    ) : null}
+                  </li>
+                ))}
               </ul>
-            </CardContent>
-          </Card>
+            )}
+          </Panel>
         </div>
 
-        <div className="col-span-1 lg:col-span-2 space-y-6">
-          <Card className="border-[#e2e8f0] shadow-sm">
-            <CardHeader className="bg-[#f8f9ff] border-b border-[#e2e8f0] py-4 flex flex-row items-center justify-between">
-              <CardTitle className="text-[#0b3d20] text-lg">Clinical History</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="divide-y divide-[#e2e8f0]">
-                <div className="py-4">
-                  <h4 className="font-bold text-[#0b1c30]">Annual Checkup</h4>
-                  <p className="text-xs text-[#64748b] mb-2">Aug 15, 2026 • Dr. Emily Lee</p>
-                  <p className="text-sm text-[#0b1c30]">Patient reported feeling generally well. No new complaints. BP slightly elevated compared to last visit. Advised to reduce sodium intake and maintain regular exercise.</p>
-                </div>
-                <div className="py-4">
-                  <h4 className="font-bold text-[#0b1c30]">Mild Hypertension Follow-up</h4>
-                  <p className="text-xs text-[#64748b] mb-2">Feb 10, 2026 • Dr. Sarah Jenkins</p>
-                  <p className="text-sm text-[#0b1c30]">BP has stabilized on 10mg Lisinopril. Patient denies any side effects (no cough, no dizziness). Will continue current regimen.</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <Panel title="Appointments" bodyClassName="">
+          {patient.appointments.length === 0 ? (
+            <EmptyState title="None on file" />
+          ) : (
+            <ul className="divide-y divide-border">
+              {patient.appointments.slice(0, 12).map((a) => (
+                <li key={a.id} className="px-5 py-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-[13px] tnum">
+                      {a.date ? formatDateTime(a.date) : "Awaiting slot"}
+                    </p>
+                    <StatusBadge status={a.status} />
+                  </div>
+                  <p className="mt-0.5 text-[13px] text-muted-foreground line-clamp-2">{a.reason}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
       </div>
+    </>
+  );
+}
+
+function Note({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div>
+      <dt className="eyebrow mb-1">{label}</dt>
+      <dd className="text-[13.5px] leading-relaxed whitespace-pre-wrap">
+        {value || <span className="text-muted-foreground">Not recorded</span>}
+      </dd>
     </div>
   );
 }

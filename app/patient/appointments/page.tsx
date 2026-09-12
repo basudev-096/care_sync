@@ -1,90 +1,109 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { requireRole } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import {
+  PageHeader,
+  Panel,
+  EmptyState,
+  StatusBadge,
+  formatDateTime,
+} from "@/components/ui-kit";
+import { RequestForm, AcceptButton, CancelForm } from "./forms";
 
-export default function PatientAppointments() {
+export const metadata = { title: "Appointments · CareClinic" };
+
+export default async function PatientAppointments() {
+  const { profile } = await requireRole("PATIENT");
+
+  const appointments = await prisma.appointment.findMany({
+    where: { patientId: profile.id },
+    include: { physician: true },
+    orderBy: { createdAt: "desc" },
+  });
+
+  const open = appointments.filter((a) =>
+    ["PENDING", "SCHEDULED", "ACCEPTED", "CHECKED_IN"].includes(a.status),
+  );
+  const past = appointments.filter((a) =>
+    ["COMPLETED", "CANCELLED", "NO_SHOW"].includes(a.status),
+  );
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-inter text-[#0b3d20]">My Appointments</h1>
-        <Button className="bg-[#0b3d20] hover:bg-[#2f7c57] text-white">
-          Book New Appointment
-        </Button>
+    <>
+      <PageHeader
+        eyebrow="Appointments"
+        title="Your appointments"
+        description="Request a consultation, confirm the time reception assigns, or cancel a visit you can no longer attend."
+      />
+
+      <div className="grid gap-6 lg:grid-cols-[1fr_22rem] items-start">
+        <div className="space-y-6">
+          <Panel title="Current" description="Visits that are still open." bodyClassName="">
+            {open.length === 0 ? (
+              <EmptyState title="Nothing open" hint="Request a consultation to get started." />
+            ) : (
+              <ul className="divide-y divide-border">
+                {open.map((a) => (
+                  <li key={a.id} className="px-5 py-4">
+                    <div className="flex flex-wrap gap-3 items-start justify-between">
+                      <div className="min-w-0">
+                        <p className="text-[14px] font-medium tnum">
+                          {a.date ? formatDateTime(a.date) : "Awaiting a date from reception"}
+                        </p>
+                        <p className="mt-0.5 text-[13px] text-muted-foreground">{a.reason}</p>
+                        {a.physician ? (
+                          <p className="mt-0.5 text-[13px] text-muted-foreground">
+                            Dr {a.physician.firstName} {a.physician.lastName}
+                          </p>
+                        ) : null}
+                      </div>
+                      <StatusBadge status={a.status} />
+                    </div>
+
+                    <div className="mt-3.5 flex flex-wrap gap-2 items-start">
+                      {/* WBS 3.1.3 - accept the assigned slot. */}
+                      {a.status === "SCHEDULED" ? <AcceptButton appointmentId={a.id} /> : null}
+                      {/* WBS 3.3.1 / 3.3.2 - cancel, reason mandatory. */}
+                      {["PENDING", "SCHEDULED", "ACCEPTED"].includes(a.status) ? (
+                        <CancelForm appointmentId={a.id} />
+                      ) : null}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
+
+          <Panel title="History" bodyClassName="">
+            {past.length === 0 ? (
+              <EmptyState title="No past appointments yet" />
+            ) : (
+              <ul className="divide-y divide-border">
+                {past.map((a) => (
+                  <li key={a.id} className="px-5 py-3.5 flex flex-wrap gap-3 items-start justify-between">
+                    <div className="min-w-0">
+                      <p className="text-[14px] tnum">{formatDateTime(a.date)}</p>
+                      <p className="mt-0.5 text-[13px] text-muted-foreground">{a.reason}</p>
+                      {a.cancelReason ? (
+                        <p className="mt-0.5 text-[13px] text-muted-foreground">
+                          Reason given: {a.cancelReason}
+                        </p>
+                      ) : null}
+                    </div>
+                    <StatusBadge status={a.status} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Panel>
+        </div>
+
+        <Panel
+          title="Request a consultation"
+          description="Reception assigns the date and time based on the doctor's schedule."
+        >
+          <RequestForm hasOpen={open.length > 0} />
+        </Panel>
       </div>
-
-      <Card className="border-[#e2e8f0] shadow-sm">
-        <CardHeader className="bg-[#f8f9ff] border-b border-[#e2e8f0]">
-          <CardTitle className="text-[#0b3d20] text-lg">Upcoming Appointments</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="divide-y divide-[#e2e8f0]">
-            <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-start gap-4">
-                <div className="h-14 w-14 bg-[#d9f2e6] rounded-lg flex flex-col items-center justify-center text-[#0b3d20]">
-                  <span className="text-sm font-semibold uppercase">Oct</span>
-                  <span className="text-xl font-bold leading-none">12</span>
-                </div>
-                <div>
-                  <h3 className="font-bold text-[#0b1c30] text-lg">Dr. Sarah Jenkins</h3>
-                  <p className="text-[#64748b]">Cardiology • 10:00 AM - 10:30 AM</p>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mt-2">
-                    Confirmed
-                  </span>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <Button variant="outline" className="text-[#2f7c57] border-[#2f7c57] hover:bg-[#d9f2e6]">Reschedule</Button>
-                <Button variant="outline" className="text-[#dc2626] border-[#dc2626] hover:bg-red-50">Cancel</Button>
-              </div>
-            </div>
-            
-            <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="flex items-start gap-4">
-                <div className="h-14 w-14 bg-[#d9f2e6] rounded-lg flex flex-col items-center justify-center text-[#0b3d20]">
-                  <span className="text-sm font-semibold uppercase">Nov</span>
-                  <span className="text-xl font-bold leading-none">05</span>
-                </div>
-                <div>
-                  <h3 className="font-bold text-[#0b1c30] text-lg">Dr. Michael Smith</h3>
-                  <p className="text-[#64748b]">Dermatology • 2:15 PM - 2:45 PM</p>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 mt-2">
-                    Pending
-                  </span>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <Button variant="outline" className="text-[#2f7c57] border-[#2f7c57] hover:bg-[#d9f2e6]">Reschedule</Button>
-                <Button variant="outline" className="text-[#dc2626] border-[#dc2626] hover:bg-red-50">Cancel</Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="border-[#e2e8f0] shadow-sm mt-8">
-        <CardHeader className="bg-[#f8f9ff] border-b border-[#e2e8f0]">
-          <CardTitle className="text-[#0b3d20] text-lg">Past Appointments</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="divide-y divide-[#e2e8f0]">
-            <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 opacity-70">
-              <div className="flex items-start gap-4">
-                <div className="h-14 w-14 bg-[#e2e8f0] rounded-lg flex flex-col items-center justify-center text-[#64748b]">
-                  <span className="text-sm font-semibold uppercase">Aug</span>
-                  <span className="text-xl font-bold leading-none">15</span>
-                </div>
-                <div>
-                  <h3 className="font-bold text-[#0b1c30] text-lg">Dr. Emily Lee</h3>
-                  <p className="text-[#64748b]">General Practice • 9:00 AM - 9:30 AM</p>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 mt-2">
-                    Completed
-                  </span>
-                </div>
-              </div>
-              <Button variant="outline" className="text-[#0b3d20] border-[#0b3d20]">View Details</Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    </>
   );
 }

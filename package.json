@@ -6,16 +6,23 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "bootstrap:staff": "tsx scripts/bootstrap-staff.ts",
+    "verify:queries": "tsx scripts/verify-queries.ts",
+    "check:captcha": "tsx scripts/check-clerk-captcha.ts",
+    "account": "tsx scripts/create-account.ts",
+    "seed:demo": "tsx scripts/seed-demo.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
     "@clerk/nextjs": "^7.9.1",
+    "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.2.6",
     "lucide-react": "^1.42.0",
     "next": "16.3.4",
+    "pdf-lib": "^1.17.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "shadcn": "^4.21.0",
@@ -30,6 +37,7 @@
     "eslint-config-next": "16.3.4",
     "prisma": "^7.10.0",
     "tailwindcss": "^4",
+    "tsx": "^4.23.13",
     "typescript": "^5"
   }
 }

@@ -1,59 +1,114 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
+import { requireRole } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { parseMedicines } from "@/lib/prescription";
+import {
+  PageHeader,
+  Panel,
+  EmptyState,
+  btn,
+  formatDate,
+} from "@/components/ui-kit";
+import { DigitizeForm } from "./forms";
 
-export default function StaffPrescriptions() {
+export const metadata = { title: "Prescriptions · CareClinic" };
+
+/** WBS 5.2 - digitise the handwritten prescription; 5.3 - PDF and print. */
+export default async function StaffPrescriptions() {
+  await requireRole("STAFF");
+
+  const [awaiting, recent] = await Promise.all([
+    // Consultations that have no prescription digitised yet.
+    prisma.consultation.findMany({
+      where: { prescriptions: { none: {} } },
+      include: { patient: true, physician: true, appointment: true },
+      orderBy: { createdAt: "desc" },
+      take: 25,
+    }),
+    prisma.prescription.findMany({
+      include: { patient: true, physician: true },
+      orderBy: { createdAt: "desc" },
+      take: 15,
+    }),
+  ]);
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-inter text-[#0b3d20]">Digitize Prescriptions</h1>
-      </div>
+    <>
+      <PageHeader
+        eyebrow="Prescription desk"
+        title="Digitise prescriptions"
+        description="Enter the physician's handwritten prescription into the template, then generate the PDF."
+      />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pending Scans */}
-        <Card className="border-[#e2e8f0] shadow-sm">
-          <CardHeader className="bg-[#f8f9ff] border-b border-[#e2e8f0]">
-            <CardTitle className="text-[#0b3d20] text-lg">Pending Uploads (12)</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-[#e2e8f0]">
-              <div className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-[#0b1c30]">Consultation - Dr. Jenkins</p>
-                  <p className="text-sm text-[#64748b]">Patient: Alex Rodriguez</p>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 mt-2">Urgent</span>
-                </div>
-                <Button className="bg-[#0b3d20] hover:bg-[#2f7c57] text-white">Upload Scan</Button>
-              </div>
-              <div className="p-4 flex items-center justify-between">
-                <div>
-                  <p className="font-bold text-[#0b1c30]">Consultation - Dr. Lee</p>
-                  <p className="text-sm text-[#64748b]">Patient: John Doe</p>
-                </div>
-                <Button className="bg-[#0b3d20] hover:bg-[#2f7c57] text-white">Upload Scan</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="space-y-6">
+        <Panel
+          title="Awaiting digitisation"
+          description="Consultations with no prescription on file yet."
+          bodyClassName=""
+        >
+          {awaiting.length === 0 ? (
+            <EmptyState
+              title="Nothing waiting"
+              hint="Every consultation note has a prescription recorded."
+            />
+          ) : (
+            <ul className="divide-y divide-border">
+              {awaiting.map((c) => (
+                <li key={c.id} className="px-5 py-4">
+                  <div className="flex flex-wrap gap-2 items-baseline justify-between">
+                    <p className="text-[14px] font-medium">
+                      {c.patient.firstName} {c.patient.lastName}
+                    </p>
+                    <p className="text-[13px] text-muted-foreground tnum">
+                      {formatDate(c.appointment.date ?? c.createdAt)} · Dr {c.physician.lastName}
+                    </p>
+                  </div>
+                  {c.diagnosis ? (
+                    <p className="mt-1 text-[13px] text-muted-foreground">
+                      Diagnosis: {c.diagnosis}
+                    </p>
+                  ) : null}
+                  <div className="mt-3">
+                    <DigitizeForm consultationId={c.id} />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Panel>
 
-        {/* Recently Digitized */}
-        <Card className="border-[#e2e8f0] shadow-sm">
-          <CardHeader className="bg-[#f8f9ff] border-b border-[#e2e8f0]">
-            <CardTitle className="text-[#0b3d20] text-lg">Recently Digitized</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="divide-y divide-[#e2e8f0]">
-              <div className="p-4 flex items-center justify-between opacity-70">
-                <div>
-                  <p className="font-bold text-[#0b1c30]">Consultation - Dr. Smith</p>
-                  <p className="text-sm text-[#64748b]">Patient: Jane Smith</p>
-                  <p className="text-xs text-[#64748b] mt-1">Processed: Today, 9:15 AM</p>
-                </div>
-                <Button variant="outline" className="text-[#2f7c57] border-[#2f7c57]">View PDF</Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <Panel title="Recently digitised" bodyClassName="">
+          {recent.length === 0 ? (
+            <EmptyState title="No prescriptions yet" />
+          ) : (
+            <ul className="divide-y divide-border">
+              {recent.map((p) => {
+                const medicines = parseMedicines(p.medicineDetails);
+                return (
+                  <li key={p.id} className="px-5 py-3.5 flex flex-wrap gap-3 items-start justify-between">
+                    <div className="min-w-0">
+                      <p className="text-[14px] font-medium">
+                        {p.patient.firstName} {p.patient.lastName}
+                      </p>
+                      <p className="mt-0.5 text-[13px] text-muted-foreground">
+                        {medicines.map((m) => m.name).join(", ")}
+                      </p>
+                      <p className="mt-0.5 text-[12px] text-muted-foreground tnum">
+                        {formatDate(p.createdAt)} · Dr {p.physician.lastName}
+                      </p>
+                    </div>
+                    {/* WBS 5.3.1 / 5.3.2 - open the PDF to view or print. */}
+                    <a href={`/api/prescriptions/${p.id}/pdf`} target="_blank" className={btn.outline}>
+                      <Download className="size-4" strokeWidth={2} />
+                      PDF
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Panel>
       </div>
-    </div>
+    </>
   );
 }

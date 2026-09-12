@@ -6,6 +6,11 @@
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-border-strong: var(--border-strong);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
@@ -49,38 +54,57 @@
 }
 
 :root {
-  --background: #f8f9ff;
-  --foreground: #0b1c30;
+  /* Surfaces -- warm paper, not blue-white, so clinical content reads calm. */
+  --background: #f6f6f4;
+  --surface: #ffffff;
+  --surface-sunken: #efefec;
+  --foreground: #14181f;
+
   --card: #ffffff;
-  --card-foreground: #0b1c30;
+  --card-foreground: #14181f;
   --popover: #ffffff;
-  --popover-foreground: #0b1c30;
-  --primary: #0b3d20;
+  --popover-foreground: #14181f;
+
+  /* Ink navy carries every primary action. */
+  --primary: #16202e;
   --primary-foreground: #ffffff;
-  --secondary: #2f7c57;
+
+  /* Clinical teal is the single accent -- used sparingly, never decoratively. */
+  --secondary: #0f6b5c;
   --secondary-foreground: #ffffff;
-  --muted: #eaf1ff;
-  --muted-foreground: #64748b;
-  --accent: #d9f2e6;
-  --accent-foreground: #0b3d20;
-  --destructive: #dc2626;
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #63b995;
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.5rem;
-  --sidebar: #f8f9ff;
-  --sidebar-foreground: #0b1c30;
-  --sidebar-primary: #0b3d20;
+  --accent: #e6f0ee;
+  --accent-foreground: #0b4a3f;
+
+  --muted: #f1f1ee;
+  --muted-foreground: #5f6672;
+
+  --destructive: #b42318;
+  --destructive-foreground: #ffffff;
+  --warning: #b54708;
+  --success: #0f6b5c;
+
+  --border: #e3e3df;
+  --border-strong: #d0d0ca;
+  --input: #d8d8d3;
+  --ring: #0f6b5c;
+
+  --chart-1: #0f6b5c;
+  --chart-2: #16202e;
+  --chart-3: #b54708;
+  --chart-4: #5f6672;
+  --chart-5: #8aa39c;
+
+  /* 6px base: crisp, not pill-shaped. */
+  --radius: 0.375rem;
+
+  --sidebar: #14181f;
+  --sidebar-foreground: #c7cbd2;
+  --sidebar-primary: #0f6b5c;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #d9f2e6;
-  --sidebar-accent-foreground: #0b3d20;
-  --sidebar-border: #e2e8f0;
-  --sidebar-ring: #63b995;
+  --sidebar-accent: #1f2631;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #262d39;
+  --sidebar-ring: #0f6b5c;
 }
 
 .dark {
@@ -126,5 +150,47 @@
   }
   html {
     @apply font-sans;
+  }
+}
+@layer base {
+  /* Tabular figures everywhere numbers matter -- times, counts, dosages. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Headings are tight and confident; body stays comfortable. */
+  h1, h2, h3, h4 {
+    letter-spacing: -0.018em;
+    text-wrap: balance;
+  }
+}
+
+@layer components {
+  /* One elevation step. Depth is carried by borders, not shadow stacks. */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .panel-raised {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: 0 1px 2px rgb(20 24 31 / 0.04), 0 1px 1px rgb(20 24 31 / 0.03);
+  }
+
+  /* Section label: the small uppercase eyebrow used above grouped content. */
+  .eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
   }
 }
