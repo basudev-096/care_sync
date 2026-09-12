@@ -25,8 +25,8 @@ const arg = process.argv[2];
 const CLEAN = arg === "--clean";
 const PASSWORD = CLEAN ? "" : arg;
 
-if (!CLEAN && (!PASSWORD || PASSWORD.length < 8)) {
-  console.error('\nUsage: npm run seed:demo -- "<password, 8+ chars>"');
+if (!CLEAN && (!PASSWORD || PASSWORD.length < 15)) {
+  console.error('\nUsage: npm run seed:demo -- "<password, 15+ chars>"');
   console.error("       npm run seed:demo -- --clean\n");
   process.exit(1);
 }

@@ -43,7 +43,7 @@ if (!roleArg || !ROLES.includes(roleArg as Role)) {
 if (!emailArg || !firstName || !lastName) {
   usage("Role, email, first name and last name are required.");
 }
-if (password && password.length < 8) usage("Password must be at least 8 characters.");
+if (password && password.length < 15) usage("Password must be at least 15 characters (Clerk instance minimum).");
 
 const role = roleArg as Role;
 const email = emailArg.trim().toLowerCase();

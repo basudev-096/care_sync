@@ -5,7 +5,30 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { authorize } from "@/lib/auth";
 
+// Mirrors the Clerk instance password policy (Configure > User & authentication).
+const MIN_PASSWORD_LENGTH = 15;
+
 export type ProvisionState = { error?: string; success?: string };
+
+/**
+ * Clerk rejections arrive as a ClerkAPIResponseError whose `message` is only the
+ * HTTP status ("Unprocessable Entity"). The reason a human needs -- password
+ * found in a breach, email already taken -- is in `errors[]`, so read that.
+ */
+function describeClerkError(err: unknown): string {
+  const errors = (err as { errors?: { message?: string; longMessage?: string }[] })?.errors;
+
+  if (Array.isArray(errors) && errors.length > 0) {
+    const detail = errors
+      .map((e) => e.longMessage || e.message)
+      .filter(Boolean)
+      .join(" ");
+    if (detail) return detail;
+  }
+
+  const message = err instanceof Error ? err.message : "Unknown error";
+  return `Could not create the account: ${message}`;
+}
 
 /**
  * Provision a physician (WBS 1.2.1) or staff (WBS 1.3.1) account.
@@ -37,8 +60,12 @@ export async function provisionAccount(
   if (!email || !firstName || !lastName) {
     return { error: "Name and email are required." };
   }
-  if (password.length < 8) {
-    return { error: "The temporary password must be at least 8 characters." };
+  // Clerk rejects anything under its instance minimum with an opaque 422, so
+  // check it here and say so plainly instead.
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    return {
+      error: `The temporary password must be at least ${MIN_PASSWORD_LENGTH} characters.`,
+    };
   }
 
   // One person, one role: reject an email that already exists anywhere.
@@ -78,8 +105,7 @@ export async function provisionAccount(
     if (clerkUserId) {
       await client.users.deleteUser(clerkUserId).catch(() => {});
     }
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return { error: `Could not create the account: ${message}` };
+    return { error: describeClerkError(err) };
   }
 
   revalidatePath("/staff/accounts");

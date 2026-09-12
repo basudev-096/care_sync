@@ -1,8 +1,22 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { AlertCircle, CheckCircle2 } from "lucide-react";
 import { provisionAccount, type ProvisionState } from "./actions";
+
+/**
+ * A random temporary password that clears Clerk's breach and strength checks.
+ * Ambiguous characters are left out so it survives being read aloud over the
+ * phone, which is how the clinic hands it over.
+ */
+function generatePassword() {
+  const alphabet = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const symbols = "!@#$%^&*";
+  const bytes = crypto.getRandomValues(new Uint32Array(19));
+  const body = Array.from(bytes, (n) => alphabet[n % alphabet.length]).join("");
+  const symbol = symbols[crypto.getRandomValues(new Uint32Array(1))[0] % symbols.length];
+  return body + symbol;
+}
 
 const field =
   "w-full h-10 px-3 rounded-md border border-input bg-white text-[0.9375rem] " +
@@ -11,6 +25,7 @@ const label = "block text-[0.8125rem] font-medium mb-1.5";
 
 export function ProvisionForm() {
   const [state, action, pending] = useActionState<ProvisionState, FormData>(provisionAccount, {});
+  const [password, setPassword] = useState("");
 
   return (
     <form action={action} className="space-y-3.5">
@@ -58,9 +73,30 @@ export function ProvisionForm() {
 
       <div>
         <label className={label} htmlFor="password">Temporary password</label>
-        <input id="password" name="password" type="text" required minLength={8} className={field}
-          placeholder="At least 8 characters" />
-        <p className="mt-1.5 text-[12px] text-muted-foreground">Share this in person or by phone, not email.</p>
+        <div className="flex gap-2">
+          <input
+            id="password"
+            name="password"
+            type="text"
+            required
+            minLength={15}
+            className={field}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="At least 15 characters"
+          />
+          <button
+            type="button"
+            onClick={() => setPassword(generatePassword())}
+            className="shrink-0 h-10 px-3 rounded-md border border-input bg-white text-[0.8125rem] font-medium hover:bg-muted transition-colors"
+          >
+            Generate
+          </button>
+        </div>
+        <p className="mt-1.5 text-[12px] text-muted-foreground">
+          Share this in person or by phone, not email. Clerk rejects common or
+          breached passwords, so use Generate if one is refused.
+        </p>
       </div>
 
       <button type="submit" disabled={pending}
