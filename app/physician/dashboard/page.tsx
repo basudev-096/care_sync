@@ -10,7 +10,7 @@ import {
   formatDate,
 } from "@/components/ui-kit";
 
-export const metadata = { title: "Today · CareClinic" };
+export const metadata = { title: "Today" };
 
 export default async function PhysicianDashboard() {
   const { profile } = await requireRole("PHYSICIAN");

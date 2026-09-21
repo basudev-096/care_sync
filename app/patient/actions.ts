@@ -126,6 +126,9 @@ export async function updateMyProfile(
 
   const dob = dobRaw ? new Date(dobRaw) : null;
   if (dob && Number.isNaN(dob.getTime())) return { error: "Enter a valid date of birth." };
+  if (dob && dob.getTime() > Date.now()) {
+    return { error: "Date of birth cannot be in the future." };
+  }
 
   // Email is intentionally not editable here: it is the Clerk identity.
   await prisma.patientProfile.update({

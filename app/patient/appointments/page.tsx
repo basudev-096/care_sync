@@ -9,7 +9,7 @@ import {
 } from "@/components/ui-kit";
 import { RequestForm, AcceptButton, CancelForm } from "./forms";
 
-export const metadata = { title: "Appointments · CareClinic" };
+export const metadata = { title: "Appointments" };
 
 export default async function PatientAppointments() {
   const { profile } = await requireRole("PATIENT");

@@ -11,7 +11,7 @@ import {
 } from "@/components/ui-kit";
 import { DigitizeForm } from "./forms";
 
-export const metadata = { title: "Prescriptions · CareClinic" };
+export const metadata = { title: "Prescriptions" };
 
 /** WBS 5.2 - digitise the handwritten prescription; 5.3 - PDF and print. */
 export default async function StaffPrescriptions() {

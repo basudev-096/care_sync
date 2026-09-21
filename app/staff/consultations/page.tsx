@@ -11,7 +11,7 @@ import {
   formatDateTime,
 } from "@/components/ui-kit";
 
-export const metadata = { title: "Consultations · CareClinic" };
+export const metadata = { title: "Consultations" };
 
 /**
  * WBS 4.5.1 - staff view of consultation timestamps and metadata.

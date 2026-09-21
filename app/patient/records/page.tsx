@@ -2,7 +2,7 @@ import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, Panel, EmptyState, formatDateTime } from "@/components/ui-kit";
 
-export const metadata = { title: "Consultations · CareClinic" };
+export const metadata = { title: "Consultations" };
 
 export default async function PatientRecords() {
   const { profile } = await requireRole("PATIENT");

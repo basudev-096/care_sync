@@ -2,7 +2,7 @@ import { SignUp } from "@clerk/nextjs";
 import { AuthShell } from "@/components/auth-shell";
 import { clerkAppearance } from "@/lib/clerk-appearance";
 
-export const metadata = { title: "Create your patient account · CareClinic" };
+export const metadata = { title: "Create your patient account" };
 
 export default function SignUpPage() {
   return (

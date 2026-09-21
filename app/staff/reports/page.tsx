@@ -1,17 +1,20 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
-  PageHeader,
+  Toolbar,
   Panel,
   DataTable,
   Row,
   Cell,
-  inputClass,
+  Stat,
+  StatStrip,
+  StatusBadge,
   btn,
   formatDate,
 } from "@/components/ui-kit";
 
-export const metadata = { title: "Reports · CareClinic" };
+export const metadata = { title: "Reports" };
 
 function startOfWeek(d: Date) {
   const date = new Date(d);
@@ -69,91 +72,132 @@ export default async function StaffReports({
     };
   });
 
-  const prevWeek = new Date(from);
-  prevWeek.setDate(prevWeek.getDate() - 7);
-  const nextWeek = new Date(from);
-  nextWeek.setDate(nextWeek.getDate() + 7);
+  // The busiest day sets the bar scale, so the shape of the week is readable
+  // without axes or a charting library.
+  const busiest = Math.max(1, ...days.map((d) => d.total));
+  const totalInWeek = byStatus.reduce((sum, s) => sum + s._count._all, 0);
+
+  const shift = (weeks: number) => {
+    const d = new Date(from);
+    d.setDate(d.getDate() + weeks * 7);
+    return d.toISOString().slice(0, 10);
+  };
+
+  const isThisWeek = from.getTime() === startOfWeek(new Date()).getTime();
 
   return (
     <>
-      <PageHeader
-        eyebrow="Administration"
+      <Toolbar
         title="Weekly summary"
-        description={`Clinic activity from ${formatDate(from)} to ${formatDate(
-          new Date(to.getTime() - 1),
-        )}.`}
-      />
+        meta={`${formatDate(from)} — ${formatDate(new Date(to.getTime() - 1))}`}
+      >
+        <div className="flex items-center gap-1.5">
+          <a
+            href={`/staff/reports?week=${shift(-1)}`}
+            className={`${btn.outline} px-2.5`}
+            aria-label="Previous week"
+          >
+            <ChevronLeft className="size-4" strokeWidth={2} />
+          </a>
+          <a
+            href={`/staff/reports?week=${shift(1)}`}
+            className={`${btn.outline} px-2.5`}
+            aria-label="Next week"
+          >
+            <ChevronRight className="size-4" strokeWidth={2} />
+          </a>
+          {!isThisWeek ? (
+            <a href="/staff/reports" className={btn.ghost}>
+              This week
+            </a>
+          ) : null}
+        </div>
+      </Toolbar>
 
-      <Panel className="mb-6">
-        <form method="get" className="flex flex-wrap gap-2.5 items-end">
-          <div>
-            <label className="block text-[13px] font-medium mb-1.5" htmlFor="week">
-              Week containing
-            </label>
-            <input
-              id="week"
-              type="date"
-              name="week"
-              defaultValue={from.toISOString().slice(0, 10)}
-              className={inputClass}
-            />
+      <StatStrip>
+        <Stat label="Patient visits" value={visits} hint="Appointments completed" />
+        <Stat label="Appointment volume" value={appointments} hint="All appointments booked" />
+        <Stat label="Prescriptions" value={prescriptions} hint="Digitised this week" />
+      </StatStrip>
+
+      <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr] items-start mt-5">
+        <Panel title="Day by day" description="Appointments booked, and how many completed.">
+          {totalInWeek === 0 ? (
+            <p className="py-10 text-center text-[13px] text-muted-foreground">
+              No appointments in this week.
+            </p>
+          ) : (
+            <ul className="space-y-2.5">
+              {days.map((d) => {
+                const isToday = d.date.toDateString() === new Date().toDateString();
+                return (
+                  <li key={d.date.toISOString()} className="flex items-center gap-3">
+                    <span
+                      className={`w-[3.25rem] shrink-0 text-[12.5px] ${
+                        isToday ? "font-semibold text-foreground" : "text-muted-foreground"
+                      }`}
+                    >
+                      {d.date.toLocaleDateString(undefined, { weekday: "short" })}
+                    </span>
+
+                    {/* Proportional bar: booked in full, completed in evergreen. */}
+                    <span className="flex-1 h-6 bg-surface-sunken rounded-[3px] overflow-hidden relative">
+                      <span
+                        className="absolute inset-y-0 left-0 bg-border-strong"
+                        style={{ width: `${(d.total / busiest) * 100}%` }}
+                      />
+                      <span
+                        className="absolute inset-y-0 left-0 bg-secondary"
+                        style={{ width: `${(d.completed / busiest) * 100}%` }}
+                      />
+                    </span>
+
+                    <span className="w-16 shrink-0 text-right text-[12.5px] tnum text-muted-foreground">
+                      {d.completed}/{d.total}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          <div className="flex items-center gap-4 mt-5 pt-4 border-t border-border text-[12px] text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span className="size-2.5 rounded-[2px] bg-secondary" aria-hidden />
+              Completed
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="size-2.5 rounded-[2px] bg-border-strong" aria-hidden />
+              Booked
+            </span>
           </div>
-          <button type="submit" className={btn.primary}>Show week</button>
-          <a href={`/staff/reports?week=${prevWeek.toISOString().slice(0, 10)}`} className={btn.outline}>
-            Previous
-          </a>
-          <a href={`/staff/reports?week=${nextWeek.toISOString().slice(0, 10)}`} className={btn.outline}>
-            Next
-          </a>
-        </form>
-      </Panel>
-
-      <div className="grid gap-5 sm:grid-cols-3 mb-6">
-        <Metric label="Patient visits" value={visits} hint="Appointments completed" />
-        <Metric label="Appointment volume" value={appointments} hint="All appointments booked" />
-        <Metric label="Prescriptions" value={prescriptions} hint="Digitised this week" />
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2 items-start">
-        <Panel title="Day by day" bodyClassName="">
-          <DataTable columns={["Day", "Appointments", "Completed"]}>
-            {days.map((d) => (
-              <Row key={d.date.toISOString()}>
-                <Cell>{d.date.toLocaleDateString(undefined, { weekday: "long", day: "2-digit", month: "short" })}</Cell>
-                <Cell className="tnum text-muted-foreground">{d.total}</Cell>
-                <Cell className="tnum text-muted-foreground">{d.completed}</Cell>
-              </Row>
-            ))}
-          </DataTable>
         </Panel>
 
         <Panel title="Outcomes" bodyClassName="">
           {byStatus.length === 0 ? (
-            <p className="px-5 py-8 text-center text-[13px] text-muted-foreground">
+            <p className="px-5 py-10 text-center text-[13px] text-muted-foreground">
               No appointments in this week.
             </p>
           ) : (
-            <DataTable columns={["Status", "Count"]}>
-              {byStatus.map((s) => (
-                <Row key={s.status}>
-                  <Cell>{s.status.replace("_", " ").toLowerCase()}</Cell>
-                  <Cell className="tnum text-muted-foreground">{s._count._all}</Cell>
-                </Row>
-              ))}
+            <DataTable columns={["Status", "Count", "Share"]}>
+              {byStatus
+                .slice()
+                .sort((a, b) => b._count._all - a._count._all)
+                .map((s) => (
+                  <Row key={s.status}>
+                    <Cell>
+                      <StatusBadge status={s.status} />
+                    </Cell>
+                    <Cell className="tnum text-muted-foreground">{s._count._all}</Cell>
+                    <Cell className="tnum text-muted-foreground">
+                      {Math.round((s._count._all / totalInWeek) * 100)}%
+                    </Cell>
+                  </Row>
+                ))}
             </DataTable>
           )}
         </Panel>
       </div>
     </>
-  );
-}
-
-function Metric({ label, value, hint }: { label: string; value: number; hint: string }) {
-  return (
-    <div className="panel-raised p-5">
-      <p className="eyebrow">{label}</p>
-      <p className="mt-2 text-[30px] font-semibold tracking-tight tnum leading-none">{value}</p>
-      <p className="mt-2 text-[13px] text-muted-foreground">{hint}</p>
-    </div>
   );
 }

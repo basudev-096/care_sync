@@ -2,7 +2,7 @@ import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { ProvisionForm } from "./form";
 
-export const metadata = { title: "Clinic accounts · CareClinic" };
+export const metadata = { title: "Clinic accounts" };
 
 export default async function AccountsPage() {
   // Layer 2: role authorization, re-checked on this page and again inside the

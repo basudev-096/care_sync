@@ -2,7 +2,7 @@ import { requireRole } from "@/lib/auth";
 import { PageHeader, Panel, age } from "@/components/ui-kit";
 import { ProfileForm } from "./form";
 
-export const metadata = { title: "My details · CareClinic" };
+export const metadata = { title: "My details" };
 
 export default async function PatientProfile() {
   // WBS 2.1.1 / 2.1.2 - view and update own demographic information.

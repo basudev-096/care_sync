@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ShieldAlert } from "lucide-react";
 import { getSessionUser, HOME_BY_ROLE, ROLE_LABEL } from "@/lib/auth";
 
-export const metadata = { title: "Access denied · CareClinic" };
+export const metadata = { title: "Access denied" };
 
 /**
  * Shown when a signed-in user reaches a route their role does not cover. It

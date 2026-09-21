@@ -10,7 +10,7 @@ import {
   formatDateTime,
 } from "@/components/ui-kit";
 
-export const metadata = { title: "Dashboard · CareClinic" };
+export const metadata = { title: "Dashboard" };
 
 const QUICK_ACTIONS = [
   { href: "/patient/appointments", label: "Request a consultation", icon: CalendarPlus },

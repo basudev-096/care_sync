@@ -4,6 +4,9 @@ import { ActionForm, SubmitButton } from "@/components/forms";
 import { inputClass, labelClass } from "@/components/ui-kit";
 import { updateMyProfile } from "../actions";
 
+// No one is born in the future; browsers enforce this on the picker.
+const TODAY = new Date().toISOString().slice(0, 10);
+
 export function ProfileForm({
   defaults,
 }: {
@@ -30,7 +33,7 @@ export function ProfileForm({
       <div className="grid sm:grid-cols-2 gap-3.5">
         <div>
           <label className={labelClass} htmlFor="dob">Date of birth</label>
-          <input id="dob" name="dob" type="date" defaultValue={defaults.dob} className={inputClass} />
+          <input id="dob" name="dob" type="date" max={TODAY} defaultValue={defaults.dob} className={inputClass} />
         </div>
         <div>
           <label className={labelClass} htmlFor="sex">Sex</label>

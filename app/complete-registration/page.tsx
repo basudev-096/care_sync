@@ -4,7 +4,7 @@ import { getSessionUser, HOME_BY_ROLE } from "@/lib/auth";
 import { AuthShell } from "@/components/auth-shell";
 import { RegistrationForm } from "./form";
 
-export const metadata = { title: "Complete your registration · CareClinic" };
+export const metadata = { title: "Complete your registration" };
 
 export default async function CompleteRegistrationPage() {
   const { userId } = await auth();

@@ -137,6 +137,9 @@ export async function registerPatientByProxy(
 
   const dob = dobRaw ? new Date(dobRaw) : null;
   if (dob && Number.isNaN(dob.getTime())) return { error: "Enter a valid date of birth." };
+  if (dob && dob.getTime() > Date.now()) {
+    return { error: "Date of birth cannot be in the future." };
+  }
 
   // clerkId is a placeholder until the patient registers themselves and claims
   // the record by email. It is unique, so it never collides with a real Clerk id.

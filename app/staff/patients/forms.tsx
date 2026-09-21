@@ -1,8 +1,11 @@
 "use client";
 
-import { ActionForm, SubmitButton, Disclosure } from "@/components/forms";
+import { ActionForm, SubmitButton } from "@/components/forms";
 import { inputClass, labelClass } from "@/components/ui-kit";
 import { registerPatientByProxy, staffUpdatePatient } from "../actions";
+
+// No one is born in the future; browsers enforce this on the picker.
+const TODAY = new Date().toISOString().slice(0, 10);
 
 /** WBS 2.3.1 / 2.3.2 - register a walk-in or calling patient. */
 export function ProxyRegisterForm() {
@@ -35,7 +38,7 @@ export function ProxyRegisterForm() {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={labelClass} htmlFor="pr-dob">Date of birth</label>
-          <input id="pr-dob" name="dob" type="date" className={inputClass} />
+          <input id="pr-dob" name="dob" type="date" max={TODAY} className={inputClass} />
         </div>
         <div>
           <label className={labelClass} htmlFor="pr-sex">Sex</label>
@@ -60,8 +63,7 @@ export function EditPatientForm({
   patient: { id: string; firstName: string; lastName: string; phone: string };
 }) {
   return (
-    <Disclosure label="Edit" variant="ghost">
-      <ActionForm action={staffUpdatePatient} className="space-y-2.5 text-left w-60">
+    <ActionForm action={staffUpdatePatient} className="space-y-3.5">
         <input type="hidden" name="patientId" value={patient.id} />
         <div>
           <label className={labelClass} htmlFor={`ef-${patient.id}`}>First name</label>
@@ -75,8 +77,7 @@ export function EditPatientForm({
           <label className={labelClass} htmlFor={`ep-${patient.id}`}>Phone</label>
           <input id={`ep-${patient.id}`} name="phone" type="tel" defaultValue={patient.phone} className={inputClass} />
         </div>
-        <SubmitButton pendingLabel="Saving…">Save</SubmitButton>
-      </ActionForm>
-    </Disclosure>
+      <SubmitButton pendingLabel="Saving…" className="w-full">Save changes</SubmitButton>
+    </ActionForm>
   );
 }

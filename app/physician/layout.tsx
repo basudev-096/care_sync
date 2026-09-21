@@ -2,8 +2,8 @@ import { requireRole } from "@/lib/auth";
 import { PortalShell } from "@/components/portal-shell";
 
 const NAV = [
-  { href: "/physician/dashboard", label: "Today" },
-  { href: "/physician/patients", label: "Patients" },
+  { href: "/physician/dashboard", label: "Today", icon: "calendarCheck" },
+  { href: "/physician/patients", label: "Patients", icon: "users", section: "Clinical" },
 ];
 
 export default async function PhysicianLayout({ children }: { children: React.ReactNode }) {

@@ -13,7 +13,7 @@ import {
 } from "@/components/ui-kit";
 import { ConsultationForm, CompleteForm, CancelForm } from "./forms";
 
-export const metadata = { title: "Consultation · CareClinic" };
+export const metadata = { title: "Consultation" };
 
 /** WBS 4.2.1 / 4.2.2 - document and save the consultation note. */
 export default async function ConsultationPage({

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { parseMedicines, describeMedicine } from "@/lib/prescription";
 import { PageHeader, Panel, EmptyState, formatDate, btn } from "@/components/ui-kit";
 
-export const metadata = { title: "Prescriptions · CareClinic" };
+export const metadata = { title: "Prescriptions" };
 
 export default async function PatientPrescriptions() {
   const { profile } = await requireRole("PATIENT");

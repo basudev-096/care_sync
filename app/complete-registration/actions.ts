@@ -39,6 +39,9 @@ export async function completeRegistration(
   if (dob && Number.isNaN(dob.getTime())) {
     return { error: "Please enter a valid date of birth." };
   }
+  if (dob && dob.getTime() > Date.now()) {
+    return { error: "Date of birth cannot be in the future." };
+  }
 
   const client = await clerkClient();
   const clerkUser = await client.users.getUser(userId);

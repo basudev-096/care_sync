@@ -13,7 +13,7 @@ import {
   age,
 } from "@/components/ui-kit";
 
-export const metadata = { title: "Patient · CareClinic" };
+export const metadata = { title: "Patient" };
 
 /** WBS 4.1.2 / 4.3 - clinical profile plus full consultation history. */
 export default async function PhysicianPatientProfile({

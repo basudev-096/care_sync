@@ -4,6 +4,9 @@ import { useActionState } from "react";
 import { AlertCircle } from "lucide-react";
 import { completeRegistration, type RegistrationState } from "./actions";
 
+// No one is born in the future; browsers enforce this on the picker.
+const TODAY = new Date().toISOString().slice(0, 10);
+
 const field =
   "w-full h-10 px-3 rounded-md border border-input bg-white text-[0.9375rem] text-foreground " +
   "placeholder:text-muted-foreground/70 focus:outline-none focus:border-secondary " +
@@ -48,7 +51,7 @@ export function RegistrationForm() {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={label} htmlFor="dob">Date of birth</label>
-          <input id="dob" name="dob" type="date" className={field} />
+          <input id="dob" name="dob" type="date" max={TODAY} className={field} />
         </div>
         <div>
           <label className={label} htmlFor="sex">Sex</label>

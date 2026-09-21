@@ -17,7 +17,7 @@ import {
   ProxyBookForm,
 } from "./forms";
 
-export const metadata = { title: "Schedule · CareClinic" };
+export const metadata = { title: "Schedule" };
 
 /** WBS 3.4.1 - centralised master day view, with the full status lifecycle. */
 export default async function StaffSchedule({

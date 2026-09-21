@@ -14,7 +14,7 @@ import {
   age,
 } from "@/components/ui-kit";
 
-export const metadata = { title: "Patients · CareClinic" };
+export const metadata = { title: "Patients" };
 
 /** WBS 4.1.1 - physician searches clinic patients by name or phone. */
 export default async function PhysicianPatients({
