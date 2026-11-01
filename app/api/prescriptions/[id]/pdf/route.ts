@@ -73,7 +73,7 @@ export async function GET(
   };
 
   // Header
-  text("CareClinic", { size: 17, font: bold });
+  text("CareSync", { size: 17, font: bold });
   y -= 15;
   text("Prescription", { size: 10, color: teal, font: bold });
   y -= 18;
@@ -136,7 +136,7 @@ export async function GET(
 
   // Footer
   page.drawText(
-    "This is a digitised copy of the prescription issued at CareClinic.",
+    "This is a digitised copy of the prescription issued at CareSync.",
     { x: margin, y: 56, size: 8, font, color: muted },
   );
 

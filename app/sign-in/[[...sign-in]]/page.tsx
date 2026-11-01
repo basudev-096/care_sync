@@ -8,7 +8,7 @@ export default function SignInPage() {
   return (
     <AuthShell
       eyebrow="Clinic portal"
-      title="Sign in to CareClinic"
+      title="Sign in to CareSync"
       subtitle="Patients, physicians and clinic staff sign in here. You'll be taken to your own portal automatically."
       footer={
         <p className="text-[13px] leading-relaxed text-muted-foreground">

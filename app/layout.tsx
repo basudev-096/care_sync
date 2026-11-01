@@ -31,8 +31,8 @@ const mono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "CareClinic",
-    template: "%s · CareClinic",
+    default: "CareSync",
+    template: "%s · CareSync",
   },
   description: "Clinic management and electronic medical records",
 };

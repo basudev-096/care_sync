@@ -37,7 +37,7 @@ export function AuthShell({
 
         <Link href="/" className="flex items-center gap-2.5 w-fit relative">
           <Mark className="size-8" />
-          <span className="font-semibold text-[15px] tracking-[-0.01em]">CareClinic</span>
+          <span className="font-semibold text-[15px] tracking-[-0.01em]">CareSync</span>
         </Link>
 
         <div className="space-y-5 relative">
@@ -61,7 +61,7 @@ export function AuthShell({
           {/* Mobile-only brand mark */}
           <Link href="/" className="lg:hidden flex items-center gap-2.5 mb-10">
             <Mark className="size-8" />
-            <span className="font-semibold text-[15px] tracking-[-0.01em]">CareClinic</span>
+            <span className="font-semibold text-[15px] tracking-[-0.01em]">CareSync</span>
           </Link>
 
           <p className="eyebrow mb-3">{eyebrow}</p>

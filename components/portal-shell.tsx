@@ -65,7 +65,7 @@ export function PortalShell({
         <div className="h-[57px] flex items-center gap-2.5 px-4 border-b border-sidebar-border shrink-0">
           <Mark />
           <span className="font-semibold text-[14.5px] tracking-[-0.01em] text-white">
-            CareClinic
+            CareSync
           </span>
           <span className="ml-auto text-[10px] font-medium uppercase tracking-[0.08em] text-white/35 px-1.5 py-0.5 rounded border border-white/12">
             {roleLabel}
@@ -108,7 +108,7 @@ export function PortalShell({
           <div className="h-14 flex items-center justify-between px-4">
             <Link href="/" className="flex items-center gap-2.5">
               <Mark className="size-7" />
-              <span className="font-semibold text-[14.5px]">CareClinic</span>
+              <span className="font-semibold text-[14.5px]">CareSync</span>
             </Link>
             <div className="flex items-center gap-3">
               <span className="text-[11.5px] uppercase tracking-[0.08em] text-white/40">
