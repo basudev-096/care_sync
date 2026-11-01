@@ -1,26 +1,232 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-border-strong: var(--border-strong);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+
+  --font-sans: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display), Georgia, serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
+  --font-heading: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/*
+ * CareClinic visual identity - "clinical paper".
+ *
+ * Warm paper ground rather than blue-white, ink-black text, and a single deep
+ * evergreen accent that only ever marks something actionable or clinical.
+ * Depth comes from hairline rules, not shadow stacks. Numbers are always
+ * tabular so columns of times and dosages line up down the page.
+ */
+:root {
+  --background: #f7f6f3;
+  --surface: #ffffff;
+  --surface-sunken: #efeee9;
+  --foreground: #191d21;
+
+  --card: #ffffff;
+  --card-foreground: #191d21;
+  --popover: #ffffff;
+  --popover-foreground: #191d21;
+
+  /* Ink carries every primary action. */
+  --primary: #191d21;
+  --primary-foreground: #ffffff;
+
+  /* Evergreen: the one accent. Used sparingly, never decoratively. */
+  --secondary: #14614f;
+  --secondary-foreground: #ffffff;
+  --accent: #e4ece8;
+  --accent-foreground: #0d4536;
+
+  --muted: #f1f0ec;
+  --muted-foreground: #6b7076;
+
+  --destructive: #a72d20;
+  --destructive-foreground: #ffffff;
+  --warning: #9a5a13;
+  --success: #14614f;
+
+  --border: #e4e2dc;
+  --border-strong: #cfccc4;
+  --input: #d6d3cb;
+  --ring: #14614f;
+
+  --chart-1: #14614f;
+  --chart-2: #191d21;
+  --chart-3: #9a5a13;
+  --chart-4: #6b7076;
+  --chart-5: #8fa8a0;
+
+  /* 5px base: crisp corners, never pill-shaped. */
+  --radius: 0.3125rem;
+
+  --sidebar: #14181b;
+  --sidebar-foreground: #b9bfc4;
+  --sidebar-primary: #14614f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #212629;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #262b2f;
+  --sidebar-ring: #14614f;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply font-sans;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv05" 1, "cv08" 1;
+    letter-spacing: -0.006em;
+  }
+
+  /* Interface headings stay tight and quiet; the serif does the speaking. */
+  h1, h2, h3, h4 {
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  /* One focus treatment across the whole product. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  ::selection {
+    background: var(--accent);
+    color: var(--accent-foreground);
+  }
+
+  /* Scrollbars that belong to the paper, not the OS. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-strong) transparent;
+  }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 999px;
+    border: 3px solid var(--background);
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted-foreground); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  /* Numbers that matter: times, counts, dosages, identifiers. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  /* The display voice. Large, serif, optical sizing corrected. */
+  .display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.015em;
+    line-height: 1.04;
+    text-wrap: balance;
+  }
+
+  /* One elevation step. Depth is carried by borders, not shadow stacks. */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+
+  .panel-raised {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow:
+      0 1px 2px rgb(25 29 33 / 0.04),
+      0 1px 1px rgb(25 29 33 / 0.02);
+  }
+
+  /* Section label above grouped content. */
+  .eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+
+  /* Hairline rule used to separate rows without boxing them in. */
+  .hairline {
+    border-color: var(--border);
+  }
+
+  /* Rows in dense lists and tables: a quiet hover, never a jump. */
+  .row-hover {
+    transition: background-color 90ms ease;
+  }
+  .row-hover:hover {
+    background: var(--muted);
+  }
 }
